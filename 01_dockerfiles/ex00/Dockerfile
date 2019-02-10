@@ -1,3 +1,3 @@
 FROM alpine
-RUN apk add vim -y
+RUN apk add vim
 CMD vim
