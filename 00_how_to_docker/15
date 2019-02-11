@@ -1,3 +1,1 @@
-#phpmyadmin en tache de fond
-
 docker run -d --name roach-warden -p 8081:80 phpmyadmin/phpmyadmin
