@@ -1,32 +1,25 @@
-FROM ubuntu:16.04
+FROM debian
+
+ENV TERM xterm
+ENV	IP 192.168.99.100
+
+EXPOSE 443 80 22
 
 RUN apt-get update -q \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
+    && DEBIAN_FRONTEND=noninteractive && apt-get install -yq --no-install-recommends \
       ca-certificates \
       openssh-server \
-      curl
+      curl && \
+	  curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh | bash
 
-RUN curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh | bash && \
-	apt-get install gitlab-ce && \
+RUN apt-get install -yq --no-install-recommends gitlab-ce
 
+#setup HTTPS
 
+RUN	echo "external_url \"https://192.168.99.100\"" >> /etc/gitlab/gitlab.rba && \
+	echo "registry_external_url \"https://registry.example.com\"" >> /etc/gitlab/gitlab.rb && \
+	echo "mattermost_external_url \"https://mattermost.example.com\"" >> /etc/gitlab/gitlab.rb
 
+#setup SSH
 
-
-
-#add url to gitlab.rb
-edit /etc/gitlab/gitlab.rb:
-external_url "https://gitlab.example.com"
-
-###create ssl key
-#create ssl directory
-mkdir -p /etc/gitlab/ssl
-sudo chmod 700 /etc/gitlab/ssl
-#create ssl certificates
-
-#copy key in folder
-cp gitlab.example.com.key gitlab.example.com.crt /etc/gitlab/ssl/
-
-
-
-#configure firewall
+CMD /opt/gitlab/embedded/bin/runsvdir-start & gitlab-ctl reconfigure && gitlab-ctl tail
