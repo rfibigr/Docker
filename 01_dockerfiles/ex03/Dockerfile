@@ -1,7 +1,6 @@
 FROM debian
 
 ENV TERM xterm
-ENV	IP 192.168.99.100
 
 EXPOSE 443 80 22
 
@@ -15,11 +14,19 @@ RUN apt-get update -q \
 RUN apt-get install -yq --no-install-recommends gitlab-ce
 
 #setup HTTPS
-
-RUN	echo "external_url \"https://192.168.99.100\"" >> /etc/gitlab/gitlab.rba && \
-	echo "registry_external_url \"https://registry.example.com\"" >> /etc/gitlab/gitlab.rb && \
-	echo "mattermost_external_url \"https://mattermost.example.com\"" >> /etc/gitlab/gitlab.rb
+RUN	echo "letsencrypt['enable'] = false" >> /etc/gitlab/gitlab.rb && \
+	openssl genrsa -out gitlab.domain.com.key 2048 && \
+	openssl req -new -x509 -key gitlab.domain.com.key -out gitlab.domain.com.crt -days 3650 -subj /CN=gitlab.domain.com && \
+	mkdir -p /etc/gitlab/ssl && \
+	chmod 700 /etc/gitlab/ssl && \
+	cp gitlab.domain.com.key gitlab.domain.com.crt /etc/gitlab/ssl && \
+	echo "external_url \"https://gitlab.domain.com\"" >> /etc/gitlab/gitlab.rb && \
+	echo "nginx['redirect_http_to_https'] = true" >> /etc/gitlab/gitlab.rb && \
+	echo "nginx['ssl_certificate'] = \"/etc/gitlab/ssl/gitlab.domain.com.crt\"" >> /etc/gitlab/gitlab.rb && \
+	echo "nginx['ssl_certificate_key'] = \"/etc/gitlab/ssl/gitlab.domain.com.key\"" >> /etc/gitlab/gitlab.rb
 
 #setup SSH
+RUN echo "gitlab_rails['gitlab_shell_ssh_port'] = 22" >> /etc/gitlab/gitlab.rb
 
-CMD /opt/gitlab/embedded/bin/runsvdir-start & gitlab-ctl reconfigure && gitlab-ctl tail
+
+CMD service ssh start && /opt/gitlab/embedded/bin/runsvdir-start & gitlab-ctl reconfigure && gitlab-ctl tail

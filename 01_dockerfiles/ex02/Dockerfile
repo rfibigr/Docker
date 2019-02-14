@@ -12,4 +12,4 @@ COPY $folder /opt/app
 WORKDIR /opt/app
 
 ONBUILD RUN	bundle install &&\
-			rails db:migrate &&\
+			rails db:migrate

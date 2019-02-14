@@ -1,3 +1,3 @@
-docker-machine ssh Aiur "docker swarm join --token $(docker-machine ssh Char "docker swarm join-token manager -q") $(docker-machine ip Aiur)"
+docker-machine ssh Aiur "<to get token>"
 # to get token : docker-machine ssh Char "docker swarm join-token manager"
 # docker node ls
